@@ -1,75 +1,69 @@
 # -*- coding: UTF-8 -*-
 """PyBank Homework Starter File."""
 
-# Dependencies
-import csv
 import os
+import csv
 
-# Files to load and output (update with correct file paths)
-file_to_load = "/Users/yashitasabharwal/Desktop/python-challenge/Starter_Code m3/PyBank/Resources/budget_data.csv"
+def run_pybank():
+    print("Running PyBank Analysis...")
+    # Dynamically construct the file paths for PyBank
+    pybank_dir = os.path.join(os.getcwd(), "Starter_Code m3", "PyBank")
+    file_to_load = os.path.join(pybank_dir, "Resources", "budget_data.csv")
+    file_to_output = os.path.join(pybank_dir, "analysis", "budget_analysis.txt")
 
-file_to_output = os.path.join("analysis", "budget_analysis.txt")  # Output file path
+    # Ensure the input file exists
+    if not os.path.exists(file_to_load):
+        print(f"Error: The file '{file_to_load}' does not exist.")
+        return
 
-# Define variables to track the financial data
-total_months = 0
-total_net = 0
-net_change_list = []
-months_list = []
-greatest_increase = ["", 0]
-greatest_decrease = ["", 999999999999999999]
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(file_to_output), exist_ok=True)
 
-# Open and read the csv
-with open(file_to_load) as financial_data:
-    reader = csv.reader(financial_data)
+    # Initialize variables
+    total_months = 0
+    total_net = 0
+    net_change_list = []
+    months_list = []
+    greatest_increase = ["", 0]
+    greatest_decrease = ["", float("inf")]
 
-    # Skip the header row
-    header = next(reader)
+    # Process the CSV
+    with open(file_to_load) as financial_data:
+        reader = csv.reader(financial_data)
+        header = next(reader)  # Skip header
 
-    # Extract first row to avoid appending to net_change_list
-    first_row = next(reader)
-    total_months += 1
-    total_net += int(first_row[1])
-    previous_net = int(first_row[1])
-
-    # Process each row of data
-    for row in reader:
-        # Track the total number of months
+        first_row = next(reader)
         total_months += 1
+        total_net += int(first_row[1])
+        previous_net = int(first_row[1])
 
-        # Track the total net amount
-        total_net += int(row[1])
+        for row in reader:
+            total_months += 1
+            total_net += int(row[1])
+            net_change = int(row[1]) - previous_net
+            net_change_list.append(net_change)
+            months_list.append(row[0])
+            previous_net = int(row[1])
 
-        # Track net change
-        net_change = int(row[1]) - previous_net
-        previous_net = int(row[1])
-        net_change_list.append(net_change)
-        months_list.append(row[0])
+            if net_change > greatest_increase[1]:
+                greatest_increase = [row[0], net_change]
+            if net_change < greatest_decrease[1]:
+                greatest_decrease = [row[0], net_change]
 
-        # Calculate the greatest increase in profits (month and amount)
-        if net_change > greatest_increase[1]:
-            greatest_increase = [row[0], net_change]
+    average_change = sum(net_change_list) / len(net_change_list)
 
-        # Calculate the greatest decrease in losses (month and amount)
-        if net_change < greatest_decrease[1]:
-            greatest_decrease = [row[0], net_change]
+    output = (
+        f"Financial Analysis\n"
+        f"----------------------------\n"
+        f"Total Months: {total_months}\n"
+        f"Total: ${total_net}\n"
+        f"Average Change: ${average_change:.2f}\n"
+        f"Greatest Increase in Profits: {greatest_increase[0]} (${greatest_increase[1]})\n"
+        f"Greatest Decrease in Losses: {greatest_decrease[0]} (${greatest_decrease[1]})\n"
+    )
 
-# Calculate the average net change across the months
-average_change = sum(net_change_list) / len(net_change_list)
+    print(output)
 
-# Generate the output summary
-output = (
-    f"Financial Analysis\n"
-    f"----------------------------\n"
-    f"Total Months: {total_months}\n"
-    f"Total: ${total_net}\n"
-    f"Average Change: ${average_change:.2f}\n"
-    f"Greatest Increase in Profits: {greatest_increase[0]} (${greatest_increase[1]})\n"
-    f"Greatest Decrease in Losses: {greatest_decrease[0]} (${greatest_decrease[1]})\n"
-)
+    with open(file_to_output, "w") as txt_file:
+        txt_file.write(output)
 
-# Print the output
-print(output)
-
-# Write the results to a text file
-with open(file_to_output, "w") as txt_file:
-    txt_file.write(output)
